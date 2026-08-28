@@ -1,0 +1,21 @@
+-- ============================================================
+-- 서식 있는 본문 (posts.body_doc)
+--
+-- body 를 대체하지 않고 **한 칸 더 두는** 이유:
+--   · body(평문) 는 목록 미리보기·본문 검색(ILIKE)·챗봇이 그대로 쓰고 있고,
+--     이미지가 어느 글에 붙는지의 근거인 `[[image:N]]` 마커도 여기 있습니다
+--     (lib/board.ts syncImages).
+--   · body_doc 이 NULL 인 글 = 서식 없이 쓰인 옛 글. 화면이 평문 경로로 그립니다
+--     (components/PostBody.tsx) — 과거 글을 변환하지 않아도 됩니다.
+--
+-- 저장물은 HTML 이 아니라 JSON 문서 트리이고, 스키마에 없는 노드·속성은 저장
+-- 전에 버려집니다 (lib/rich-text.ts normalizeDoc). 그래서 출력할 때 sanitizer 가
+-- 필요 없습니다 — 렌더러가 React 요소로 그립니다.
+--
+-- TEXT 에 JSON 문자열로 넣지 않고 JSONB 를 쓰는 이유: 나중에 "표가 들어간 글"
+-- 같은 걸 찾을 때 SQL 로 물어볼 수 있고, 형식이 깨진 값이 애초에 안 들어갑니다.
+--
+-- ⚠ 여러 번 실행해도 안전해야 합니다 (lib/db.ts runMigrations 주석 참고).
+-- ============================================================
+
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS body_doc JSONB;

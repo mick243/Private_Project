@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.pglite/
+/uploads/
+# DB 덤프 (pg_dump). 파괴적 작업 전에 떠 두는 복구용 — 커밋하면 안 됩니다
+backups/
+.env.local
+next-env.d.ts
+*.tsbuildinfo
+coverage/
+
+# 오락실 수입 스크립트의 진행 상태 (하루 한도·이어서 하기)
+.arcade-import-state.json
+
+# npm run games:localdata 가 뽑아낸 인허가 목록 (원본은 공공데이터포털에 있음)
+localdata/
