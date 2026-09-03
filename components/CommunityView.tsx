@@ -150,6 +150,35 @@ export default function CommunityView() {
   }, [q]);
 
   /**
+   * 검색 버튼 · 엔터 — 디바운스를 기다리지 않고 지금 조회한다. 위 타이머와
+   * 같은 이유로 검색어와 페이지를 **한 번에** 되돌린다.
+   *
+   * 여기서는 searchStarted 를 보지 않는다. 위 타이머가 그걸 보는 것은 "화면이
+   * 열려서 한 번 돈 것" 과 "검색어가 바뀐 것" 을 가리기 위한 것인데, 버튼을
+   * 손으로 누른 것은 언제 눌렀든 검색이다 — 2페이지에서 눌렀다면 그 검색
+   * 결과의 1페이지를 봐야 한다.
+   *
+   * 뜨고 있는 타이머는 굳이 끄지 않는다. 300ms 뒤에 같은 값으로 한 번 더
+   * 불리지만 값이 같으면 React 가 리렌더를 건너뛴다.
+   */
+  const submitSearch = () => {
+    setDebouncedQ(q);
+    setPage(1);
+    searchStarted.current = true;
+  };
+
+  /**
+   * 지우기 — 화면의 값과 조회에 쓰인 값을 함께 비우고 1페이지로 돌린다.
+   * setQ 만 하면 목록이 300ms 뒤에야 돌아와 "안 먹었다" 로 읽힌다.
+   */
+  const clearSearch = () => {
+    setQ('');
+    setDebouncedQ('');
+    setPage(1);
+    searchStarted.current = true;
+  };
+
+  /**
    * 조회에 실을 검색어. 공백만 적은 것은 검색이 아니다.
    *
    * loadPosts 의 의존성으로도 이 값을 쓴다 — debouncedQ 를 그대로 쓰면 뒤에
@@ -333,7 +362,8 @@ export default function CommunityView() {
           맞다. 말머리·정렬 줄과 한 줄에 합치지 않는 이유: 말머리 칩이 기종
           수만큼 늘어나는 줄이라, 거기에 입력창을 끼우면 좁은 화면에서 검색창이
           칩 사이 어딘가로 밀려간다. */}
-      <div className="list-search">
+      {/* <form> 인 이유는 엔터다 (components/LiveFeed.tsx 의 같은 줄 주석 참고) */}
+      <form className="list-search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input
           className="search"
           type="search"
@@ -342,6 +372,14 @@ export default function CommunityView() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <button type="submit" className="btn btn-sm btn-primary">
+          검색
+        </button>
+        {/* 값이 없을 때 감추지 않고 끄는 이유는 아래 건수 칸과 같다 — 나타나고
+            사라지면 그 칸이 밀려서 글자를 치는 중에 줄이 흔들린다. */}
+        <button type="button" className="btn btn-sm" disabled={q === ''} onClick={clearSearch}>
+          지우기
+        </button>
         {/* 몇 건인지는 검색 중에만 뜻이 있다 — 평소의 전체 글 수는 페이지
             버튼이 이미 말해 준다. loading 중에 옛 total 을 그대로 보여주면
             직전 검색어의 건수가 새 검색어 옆에 붙으므로 문구로 바꿔 둔다. */}
@@ -350,7 +388,7 @@ export default function CommunityView() {
             {loading ? '찾는 중…' : `${total.toLocaleString('ko-KR')}건`}
           </span>
         )}
-      </div>
+      </form>
 
       {/* ── 말머리 · 정렬 ── */}
       <div className="board-filters">

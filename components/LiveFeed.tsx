@@ -85,6 +85,26 @@ export default function LiveFeed() {
   }, [q]);
 
   /**
+   * 검색 버튼 · 엔터 — 디바운스를 기다리지 않고 지금 조회한다.
+   *
+   * 뜨고 있는 타이머는 굳이 끄지 않는다. 300ms 뒤에 같은 값으로 한 번 더
+   * setDebouncedQ 가 불리지만, 값이 같으면 React 가 리렌더를 건너뛰므로
+   * 조회는 한 번이다.
+   */
+  const submitSearch = () => setDebouncedQ(q);
+
+  /**
+   * 지우기 — 화면의 값과 조회에 쓰인 값을 **함께** 비운다.
+   *
+   * setQ 만 하면 목록은 300ms 뒤에야 돌아온다. 버튼을 누른 사람에게 그 사이는
+   * "안 먹었다" 로 읽히므로, 누르는 즉시 전체 목록으로 돌린다.
+   */
+  const clearSearch = () => {
+    setQ('');
+    setDebouncedQ('');
+  };
+
+  /**
    * 조회에 실을 검색어. 공백만 적은 것은 검색이 아니다.
    *
    * load 의 의존성으로도 이 값을 쓴다 — debouncedQ 를 그대로 쓰면 뒤에 공백
@@ -171,7 +191,10 @@ export default function LiveFeed() {
         </button>
       </header>
 
-      <div className="list-search">
+      {/* <form> 인 이유는 엔터다 — 검색 버튼이 옆에 있으면 엔터로도 눌리기를
+          기대하게 되고, form 의 기본 동작이 그걸 공짜로 해 준다. onKeyDown 에
+          Enter 를 따로 적으면 같은 일을 버튼과 두 곳에서 관리하게 된다. */}
+      <form className="list-search" onSubmit={(e) => { e.preventDefault(); submitSearch(); }}>
         <input
           className="search"
           type="search"
@@ -180,7 +203,16 @@ export default function LiveFeed() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-      </div>
+        <button type="submit" className="btn btn-sm btn-primary">
+          검색
+        </button>
+        {/* 값이 없을 때 **감추지 않고 끈다** — 감추면 나타나고 사라질 때마다
+            오른쪽의 건수 칸이 밀려서, 글자를 치는 중에 줄이 흔들린다
+            (app/globals.css 의 .list-search-count 주석과 같은 이유). */}
+        <button type="button" className="btn btn-sm" disabled={q === ''} onClick={clearSearch}>
+          지우기
+        </button>
+      </form>
 
       <div className="feed-filters">
         <div className="seg">
